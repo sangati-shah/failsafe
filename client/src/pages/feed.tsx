@@ -84,7 +84,7 @@ function LeaderboardPanel({ users }: { users: User[] }) {
     <Card className="p-4" data-testid="panel-leaderboard">
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="w-4 h-4 text-primary" />
-        <h3 className="font-semibold text-sm">Top Failures This Week</h3>
+        <h3 className="font-semibold text-sm">The Bounce-Back Board</h3>
       </div>
       <div className="space-y-2">
         {users.map((u, i) => (
@@ -164,7 +164,7 @@ export default function Feed() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Share Your Setback</DialogTitle>
-                <DialogDescription>Everything stays anonymous. Our AI will offer personalized support.</DialogDescription>
+                <DialogDescription>Everything stays anonymous. Share and get support from the community.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <Textarea

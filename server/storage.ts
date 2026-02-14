@@ -39,6 +39,7 @@ export interface IStorage {
 
   createWeeklyCheckin(checkin: InsertWeeklyCheckin): Promise<WeeklyCheckin>;
 
+  getAllUsers(): Promise<User[]>;
   getUsersByCategory(category: string, excludeUserId: string): Promise<User[]>;
   updateChatRoomMatchId(roomId: string, matchId: string): Promise<void>;
 }
@@ -189,6 +190,10 @@ export class DatabaseStorage implements IStorage {
   async createWeeklyCheckin(checkin: InsertWeeklyCheckin): Promise<WeeklyCheckin> {
     const [created] = await db.insert(weeklyCheckins).values(checkin).returning();
     return created;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.lastActive));
   }
 
   async getUsersByCategory(category: string, excludeUserId: string): Promise<User[]> {

@@ -5,7 +5,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { generateUsername } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Loader2, Linkedin } from "lucide-react";
 
 const COMMON_FAILURES = [
   "Failed interview",
@@ -27,14 +27,15 @@ const COMMON_FAILURES = [
   "Imposter syndrome",
 ];
 
+const MAX_FAILURES = 5;
+
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [selectedFailures, setSelectedFailures] = useState<string[]>([]);
-  const [failureDescription, setFailureDescription] = useState("");
-  const [availability, setAvailability] = useState("");
 
   const createUser = useMutation({
     mutationFn: async () => {
@@ -43,10 +44,9 @@ export default function Onboarding() {
         username,
         goal,
         failures: selectedFailures,
-        failureDescription: failureDescription || null,
+        linkedinUrl: linkedinUrl || null,
         points: 0,
         badges: [],
-        availability: availability || null,
       });
       return res.json();
     },
@@ -63,14 +63,16 @@ export default function Onboarding() {
   });
 
   const toggleFailure = (f: string) => {
-    setSelectedFailures((prev) =>
-      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
-    );
+    setSelectedFailures((prev) => {
+      if (prev.includes(f)) return prev.filter((x) => x !== f);
+      if (prev.length >= MAX_FAILURES) return prev;
+      return [...prev, f];
+    });
   };
 
   if (step === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
         <div className="max-w-xl w-full text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-6xl sm:text-7xl font-bold text-primary mb-4" data-testid="text-logo">
@@ -113,6 +115,22 @@ export default function Onboarding() {
               <p className="text-xs text-muted-foreground mt-2 text-right">{goal.length}/200</p>
             </div>
 
+            <div>
+              <label className="block text-base font-semibold mb-3">
+                <Linkedin className="w-4 h-4 inline mr-2" />
+                LinkedIn Profile (optional)
+              </label>
+              <input
+                type="url"
+                placeholder="https://www.linkedin.com/in/yourprofile"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                className="w-full px-5 py-3.5 bg-background rounded-xl text-base border-2 border-border focus:border-primary focus:ring-0 focus:outline-none transition-colors"
+                data-testid="input-linkedin"
+              />
+              <p className="text-xs text-muted-foreground mt-2">Connect your profile to find relevant matches</p>
+            </div>
+
             <Button
               size="lg"
               onClick={() => goal.trim() && setStep(1)}
@@ -132,141 +150,72 @@ export default function Onboarding() {
     );
   }
 
-  if (step === 1) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-3" data-testid="text-logo-step1">
-              FailSafe
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Share your setbacks
-            </p>
-          </div>
-
-          <div className="bg-card rounded-2xl shadow-lg border p-6 sm:p-8 space-y-6">
-            <div>
-              <h2 className="text-xl font-bold mb-2">
-                What challenges have you faced?
-              </h2>
-              <p className="text-muted-foreground mb-6">Select all that apply</p>
-
-              <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                {COMMON_FAILURES.map((failure) => (
-                  <div
-                    key={failure}
-                    onClick={() => toggleFailure(failure)}
-                    className={`flex items-center gap-4 p-3.5 rounded-xl cursor-pointer transition-all border-2 ${
-                      selectedFailures.includes(failure)
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover-elevate"
-                    }`}
-                    data-testid={`checkbox-failure-${failure.replace(/\s+/g, "-").toLowerCase()}`}
-                  >
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                      selectedFailures.includes(failure)
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground/30"
-                    }`}>
-                      {selectedFailures.includes(failure) && (
-                        <Check className="w-3.5 h-3.5 text-primary-foreground" />
-                      )}
-                    </div>
-                    <span className="text-sm font-medium flex-1">{failure}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setStep(0)}
-                className="rounded-xl font-semibold"
-                data-testid="button-back-step1"
-              >
-                <ArrowLeft className="mr-2 w-4 h-4" /> Back
-              </Button>
-              <Button
-                size="lg"
-                onClick={() => setStep(2)}
-                disabled={selectedFailures.length === 0}
-                className="flex-1 rounded-xl font-bold"
-                data-testid="button-next-step1"
-              >
-                Continue <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-3" data-testid="text-logo-step2">
+          <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-3" data-testid="text-logo-step1">
             FailSafe
           </h1>
           <p className="text-lg text-muted-foreground">
-            Almost there!
+            Share your setbacks
           </p>
         </div>
 
         <div className="bg-card rounded-2xl shadow-lg border p-6 sm:p-8 space-y-6">
           <div>
-            <label className="block text-xl font-bold mb-3">
-              Want to share more? (Optional)
-            </label>
-            <textarea
-              rows={4}
-              maxLength={300}
-              placeholder="Tell us about your experience..."
-              value={failureDescription}
-              onChange={(e) => setFailureDescription(e.target.value.slice(0, 300))}
-              className="w-full px-5 py-3.5 bg-background rounded-xl border-2 border-border focus:border-primary focus:ring-0 focus:outline-none resize-none transition-colors text-sm"
-              data-testid="textarea-failure-description"
-            />
-            <p className="text-xs text-muted-foreground mt-2 text-right">
-              {failureDescription.length}/300
-            </p>
-          </div>
+            <h2 className="text-xl font-bold mb-2">
+              What challenges have you faced?
+            </h2>
+            <p className="text-muted-foreground mb-6">Select up to {MAX_FAILURES}</p>
 
-          <div>
-            <label className="block text-sm font-semibold mb-2">
-              Availability
-            </label>
-            <select
-              value={availability}
-              onChange={(e) => setAvailability(e.target.value)}
-              className="w-full px-5 py-3.5 bg-background rounded-xl border-2 border-border focus:border-primary focus:ring-0 focus:outline-none transition-colors text-sm"
-              data-testid="select-availability"
-            >
-              <option value="">Flexible</option>
-              <option value="Weekday mornings">Weekday mornings</option>
-              <option value="Weekday evenings">Weekday evenings</option>
-              <option value="Weekends">Weekends</option>
-            </select>
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+              {COMMON_FAILURES.map((failure) => {
+                const isSelected = selectedFailures.includes(failure);
+                const isDisabled = !isSelected && selectedFailures.length >= MAX_FAILURES;
+                return (
+                  <div
+                    key={failure}
+                    onClick={() => !isDisabled && toggleFailure(failure)}
+                    className={`flex items-center gap-4 p-3.5 rounded-xl transition-all border-2 ${
+                      isSelected
+                        ? "border-primary bg-primary/5 cursor-pointer"
+                        : isDisabled
+                        ? "border-border opacity-40 cursor-not-allowed"
+                        : "border-border hover-elevate cursor-pointer"
+                    }`}
+                    data-testid={`checkbox-failure-${failure.replace(/\s+/g, "-").toLowerCase()}`}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                      isSelected
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground/30"
+                    }`}>
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium flex-1">{failure}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
             <Button
               variant="outline"
               size="lg"
-              onClick={() => setStep(1)}
+              onClick={() => setStep(0)}
               className="rounded-xl font-semibold"
-              data-testid="button-back-step2"
+              data-testid="button-back-step1"
             >
               <ArrowLeft className="mr-2 w-4 h-4" /> Back
             </Button>
             <Button
               size="lg"
               onClick={() => createUser.mutate()}
-              disabled={createUser.isPending}
+              disabled={selectedFailures.length === 0 || createUser.isPending}
               className="flex-1 rounded-xl font-bold bg-gradient-to-r from-primary to-accent border-0"
               data-testid="button-create-account"
             >

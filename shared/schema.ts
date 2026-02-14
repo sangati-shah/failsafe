@@ -14,6 +14,7 @@ export const users = pgTable("users", {
   points: integer("points").notNull().default(0),
   badges: text("badges").array().notNull().default(sql`'{}'::text[]`),
   learningStyle: text("learning_style"),
+  linkedinUrl: text("linkedin_url"),
   availability: text("availability"),
   accountabilityStyle: text("accountability_style"),
   lastActive: timestamp("last_active").defaultNow(),

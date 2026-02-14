@@ -10,11 +10,12 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Newspaper, Users, User, Trophy } from "lucide-react";
+import { Newspaper, Users, User, Trophy, Calendar } from "lucide-react";
 
 const navItems = [
   { title: "Feed", url: "/feed", icon: Newspaper },
   { title: "Matches", url: "/matches", icon: Users },
+  { title: "Events", url: "/events", icon: Calendar },
   { title: "Profile", url: "/profile", icon: User },
 ];
 

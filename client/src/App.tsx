@@ -13,6 +13,7 @@ import Feed from "@/pages/feed";
 import ChatPage from "@/pages/chat";
 import Profile from "@/pages/profile";
 import Matches from "@/pages/matches";
+import Events from "@/pages/events";
 import NotFound from "@/pages/not-found";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,7 @@ function AppLayout() {
             <Switch>
               <Route path="/feed" component={Feed} />
               <Route path="/matches" component={Matches} />
+              <Route path="/events" component={Events} />
               <Route path="/chat/:roomId" component={ChatPage} />
               <Route path="/profile" component={Profile} />
               <Route component={NotFound} />

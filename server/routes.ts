@@ -146,23 +146,41 @@ export async function registerRoutes(
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      const candidates = await storage.getUsersByCategory(user.category || "General", userId);
-      if (candidates.length === 0) {
-        return res.status(404).json({ message: "No matches found yet. Check back later!" });
+      const allUsers = await storage.getAllUsers();
+      const existingMatches = await storage.getMatchesByUser(userId);
+      const alreadyMatchedIds = new Set<string>();
+      alreadyMatchedIds.add(userId);
+      for (const m of existingMatches) {
+        for (const uid of m.userIds || []) {
+          alreadyMatchedIds.add(uid);
+        }
       }
 
-      const matchPartner = candidates[Math.floor(Math.random() * candidates.length)];
+      const candidates = allUsers.filter((u) => !alreadyMatchedIds.has(u.id));
+
+      if (candidates.length === 0) {
+        return res.status(404).json({ message: "No new matches found. Check back later!" });
+      }
+
+      const scored = candidates.map((c) => {
+        const sharedFailures = (user.failures || []).filter((f) => (c.failures || []).includes(f));
+        return { user: c, score: sharedFailures.length };
+      });
+      scored.sort((a, b) => b.score - a.score);
+
+      const matchPartner = scored[0].user;
 
       const roomName = generateRoomName();
-      const tempRoomId = "pending";
       const room = await storage.createChatRoom({
-        matchId: tempRoomId,
+        matchId: "pending",
         roomName,
       });
 
+      const sharedCategory = (user.failures || []).find((f) => (matchPartner.failures || []).includes(f)) || "General";
+
       const match = await storage.createMatch({
         userIds: [userId, matchPartner.id],
-        category: user.category || "General",
+        category: sharedCategory,
         chatRoomId: room.id,
       });
 

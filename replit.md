@@ -15,7 +15,7 @@ FailSafe is a web application where users share setbacks anonymously, get matche
 ## Project Structure
 ```
 client/src/
-├── pages/           # Onboarding, Feed, Chat, Profile, Matches
+├── pages/           # Onboarding, Feed, Chat, Profile, Matches, Events
 ├── components/      # AppSidebar, ThemeProvider, ThemeToggle, UI components
 ├── lib/             # queryClient, constants, utils
 └── hooks/           # use-toast, use-mobile
@@ -26,7 +26,7 @@ server/
 ├── storage.ts       # Database CRUD (IStorage interface)
 ├── minimax.ts       # MiniMax AI service (encouragement, challenges, support)
 ├── db.ts            # Drizzle + pg connection
-├── seed.ts          # Sample data seeder
+├── seed.ts          # LinkedIn-based seed data (4 users + matches)
 └── constants.ts     # Points, challenges, room names
 
 shared/
@@ -34,17 +34,28 @@ shared/
 ```
 
 ## Key Features
-- Anonymous onboarding (3 steps: goal, failures, preferences)
+- Anonymous onboarding (2 steps: goal + LinkedIn URL, failures checklist max 5)
 - Auto-generated usernames (Adjective_Noun_Number)
+- Optional LinkedIn profile URL during onboarding
 - Failure feed with AI-powered encouragement system
 - AI support response when posting failures (MiniMax)
 - AI-generated personalized daily challenges
-- Leaderboard with points
-- Matching system
+- Leaderboard titled "The Bounce-Back Board"
+- Matching system (matches by shared failures, not category)
 - Real-time WebSocket chat rooms
 - Profile with badges, "I Tried Again!" button
 - Weekly check-ins
+- Events page (Luma SF events with user attendance tracking)
 - Dark/light theme toggle
+
+## Seed Data
+- 4 hardcoded users from LinkedIn profiles:
+  - Resilient_Pioneer_4281 (sangatishah)
+  - Bold_Explorer_7392 (grishmajena)
+  - Fearless_Falcon_5618 (amandahui)
+  - Brave_Summit_3947 (yogita-s)
+- 4 pre-created matches between these users
+- 4 sample posts from each user
 
 ## AI Integration (MiniMax)
 - **AI Support**: When posting a failure, MiniMax generates a personalized supportive response shown in a dialog
@@ -64,7 +75,7 @@ shared/
 - `POST /api/posts` - Post a failure (+10pts)
 - `POST /api/posts/:id/encourage` - Encourage (+5 giver, +2 receiver)
 - `GET /api/leaderboard` - Top users by points
-- `POST /api/matches/find` - Find match by category
+- `POST /api/matches/find` - Find match by shared failures
 - `GET /api/matches/:userId` - Get user matches
 - `GET /api/chat/:roomId/room` - Get chat room info
 - `GET /api/chat/:roomId/messages` - Get messages
@@ -84,9 +95,9 @@ Uses localStorage (failsafe_user_id, failsafe_username) - no email/password need
 - Weekly check-in: +15
 
 ## Design
-- Color palette: pink/fuchsia (primary), green (accent), clean white backgrounds
-- Onboarding: gradient backgrounds (pink-to-green), rounded-2xl cards, modern immersive 3-screen flow
+- Color palette: lavender (primary HSL 255 60% 68%), green (accent), clean white backgrounds
+- Onboarding: gradient backgrounds (violet-to-green), rounded-2xl cards, modern 2-screen flow
 - Encouragement icon: HeartHandshake (support-themed, not a plain heart)
 - Chat rooms show partner's username in header
-- Font: Inter
+- Font: Montserrat
 - Dark mode support via class-based toggle
