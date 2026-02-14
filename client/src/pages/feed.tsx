@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Post, User } from "@shared/schema";
-import { Heart, Plus, TrendingUp, Trophy, Flame, Star, Zap, Target, Sparkles } from "lucide-react";
+import { HeartHandshake, Plus, TrendingUp, Trophy, Flame, Star, Zap, Target, Sparkles } from "lucide-react";
 
 function FailureCard({ post, currentUserId }: { post: Post; currentUserId: string }) {
   const { toast } = useToast();
@@ -60,7 +60,7 @@ function FailureCard({ post, currentUserId }: { post: Post; currentUserId: strin
           onClick={() => encourage.mutate()}
           data-testid={`button-encourage-${post.id}`}
         >
-          <Heart className={`w-3.5 h-3.5 mr-1.5 ${hasEncouraged ? "fill-current" : ""}`} />
+          <HeartHandshake className={`w-3.5 h-3.5 mr-1.5 ${hasEncouraged ? "fill-current" : ""}`} />
           {encourage.isPending ? <Sparkles className="w-3 h-3 animate-spin" /> : (post.encouragements || 0)}
         </Button>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">

@@ -4,43 +4,37 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { generateUsername } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronRight, ChevronLeft, Target, ListChecks, Sparkles, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+
+const COMMON_FAILURES = [
+  "Failed interview",
+  "Rejected promotion",
+  "Laid off",
+  "Startup failed",
+  "Product launch flopped",
+  "Lost major client",
+  "Funding rejected",
+  "Failed exam",
+  "Rejected from program",
+  "Quit exercise routine",
+  "Diet failed",
+  "Breakup",
+  "Family conflict",
+  "Writer's block",
+  "Project abandoned",
+  "Burnout",
+  "Imposter syndrome",
+];
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [goal, setGoal] = useState("");
   const [selectedFailures, setSelectedFailures] = useState<string[]>([]);
   const [failureDescription, setFailureDescription] = useState("");
-  const [learningStyle, setLearningStyle] = useState("");
   const [availability, setAvailability] = useState("");
-  const [accountabilityStyle, setAccountabilityStyle] = useState("");
-
-  const allFailures = [
-    "Failed multiple interviews",
-    "No responses to applications",
-    "Rejected after final round",
-    "Couldn't land new role",
-    "Skills gap too large",
-    "Failed product launch",
-    "Lost funding or investors",
-    "Gave up halfway through a course",
-    "Failed certification exam",
-    "Can't stay consistent",
-    "Creative block for months",
-    "Procrastinated too long",
-    "Fear of failure held me back",
-    "Lost motivation",
-    "Burnout from trying too hard",
-  ];
 
   const createUser = useMutation({
     mutationFn: async () => {
@@ -52,9 +46,7 @@ export default function Onboarding() {
         failureDescription: failureDescription || null,
         points: 0,
         badges: [],
-        learningStyle: learningStyle || null,
         availability: availability || null,
-        accountabilityStyle: accountabilityStyle || null,
       });
       return res.json();
     },
@@ -76,189 +68,219 @@ export default function Onboarding() {
     );
   };
 
-  const canProceedStep1 = goal.trim().length > 0;
-  const canProceedStep2 = selectedFailures.length > 0;
+  if (step === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
+        <div className="max-w-xl w-full text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-6xl sm:text-7xl font-bold text-primary mb-4" data-testid="text-logo">
+              FailSafe
+            </h1>
+            <p className="text-xl sm:text-2xl text-muted-foreground font-medium">
+              Turn your setbacks into comebacks, together.
+            </p>
+          </div>
 
-  const steps = [
-    { num: 1, label: "Set Goal", icon: Target },
-    { num: 2, label: "Share Failures", icon: ListChecks },
-    { num: 3, label: "Preferences", icon: Sparkles },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
-            <span className="text-primary">Fail</span>Safe
-          </h1>
-          <p className="text-muted-foreground text-sm">Transform failures into connections</p>
-        </div>
-
-        <div className="flex items-center justify-center gap-2 mb-8" data-testid="progress-steps">
-          {steps.map((s, i) => (
-            <div key={s.num} className="flex items-center gap-2">
-              <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-medium transition-colors ${
-                  step >= s.num
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {s.num}
-              </div>
-              <span className={`text-xs hidden sm:inline ${step >= s.num ? "text-foreground" : "text-muted-foreground"}`}>
-                {s.label}
-              </span>
-              {i < steps.length - 1 && (
-                <div className={`w-8 h-0.5 ${step > s.num ? "bg-primary" : "bg-muted"}`} />
-              )}
+          <div className="bg-card rounded-2xl shadow-lg border p-8 sm:p-10 space-y-6 text-left">
+            <div>
+              <label className="block text-base font-semibold mb-3">
+                What should we call you?
+              </label>
+              <input
+                type="text"
+                disabled
+                value="AnonymousPhoenix"
+                className="w-full px-5 py-3.5 bg-muted text-muted-foreground rounded-xl text-base border border-border cursor-not-allowed"
+                data-testid="input-username-preview"
+              />
+              <p className="text-xs text-muted-foreground mt-2">A random username will be generated for you</p>
             </div>
-          ))}
-        </div>
 
-        <Card className="p-6">
-          {step === 1 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold mb-1">What's your goal?</h2>
-                <p className="text-sm text-muted-foreground mb-4">Tell us what you're working towards</p>
-                <Input
-                  data-testid="input-goal"
-                  placeholder="e.g., Land a product manager role at a tech company"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value.slice(0, 200))}
-                  maxLength={200}
-                />
-                <p className="text-xs text-muted-foreground mt-1 text-right">{goal.length}/200</p>
+            <div>
+              <label className="block text-base font-semibold mb-3">
+                What's your big goal?
+              </label>
+              <input
+                type="text"
+                placeholder="Launch my startup, run a marathon..."
+                value={goal}
+                onChange={(e) => setGoal(e.target.value.slice(0, 200))}
+                maxLength={200}
+                className="w-full px-5 py-3.5 bg-background rounded-xl text-base border-2 border-border focus:border-primary focus:ring-0 focus:outline-none transition-colors"
+                autoFocus
+                data-testid="input-goal"
+              />
+              <p className="text-xs text-muted-foreground mt-2 text-right">{goal.length}/200</p>
+            </div>
+
+            <Button
+              size="lg"
+              onClick={() => goal.trim() && setStep(1)}
+              disabled={!goal.trim()}
+              className="w-full rounded-xl font-bold"
+              data-testid="button-start-journey"
+            >
+              Start Journey <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Everything is anonymous. No email or password needed.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-3" data-testid="text-logo-step1">
+              FailSafe
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Share your setbacks
+            </p>
+          </div>
+
+          <div className="bg-card rounded-2xl shadow-lg border p-6 sm:p-8 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold mb-2">
+                What challenges have you faced?
+              </h2>
+              <p className="text-muted-foreground mb-6">Select all that apply</p>
+
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                {COMMON_FAILURES.map((failure) => (
+                  <div
+                    key={failure}
+                    onClick={() => toggleFailure(failure)}
+                    className={`flex items-center gap-4 p-3.5 rounded-xl cursor-pointer transition-all border-2 ${
+                      selectedFailures.includes(failure)
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover-elevate"
+                    }`}
+                    data-testid={`checkbox-failure-${failure.replace(/\s+/g, "-").toLowerCase()}`}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                      selectedFailures.includes(failure)
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground/30"
+                    }`}>
+                      {selectedFailures.includes(failure) && (
+                        <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium flex-1">{failure}</span>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
               <Button
-                data-testid="button-next-step1"
-                className="w-full"
-                disabled={!canProceedStep1}
-                onClick={() => setStep(2)}
+                variant="outline"
+                size="lg"
+                onClick={() => setStep(0)}
+                className="rounded-xl font-semibold"
+                data-testid="button-back-step1"
               >
-                Continue <ChevronRight className="ml-1 w-4 h-4" />
+                <ArrowLeft className="mr-2 w-4 h-4" /> Back
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => setStep(2)}
+                disabled={selectedFailures.length === 0}
+                className="flex-1 rounded-xl font-bold"
+                data-testid="button-next-step1"
+              >
+                Continue <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </div>
-          )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          {step === 2 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold mb-1">What have been your setbacks?</h2>
-                <p className="text-sm text-muted-foreground mb-4">Select the ones you've experienced</p>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {allFailures.map((f) => (
-                    <label
-                      key={f}
-                      className="flex items-center gap-3 p-3 rounded-md hover-elevate cursor-pointer border border-transparent"
-                      data-testid={`checkbox-failure-${f.replace(/\s+/g, "-").toLowerCase()}`}
-                    >
-                      <Checkbox
-                        checked={selectedFailures.includes(f)}
-                        onCheckedChange={() => toggleFailure(f)}
-                      />
-                      <span className="text-sm">{f}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Tell us more (optional)</Label>
-                <Textarea
-                  data-testid="textarea-failure-description"
-                  placeholder="Share your story... everything stays anonymous"
-                  value={failureDescription}
-                  onChange={(e) => setFailureDescription(e.target.value.slice(0, 500))}
-                  className="resize-none"
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground mt-1 text-right">{failureDescription.length}/500</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(1)} data-testid="button-back-step2">
-                  <ChevronLeft className="mr-1 w-4 h-4" /> Back
-                </Button>
-                <Button
-                  className="flex-1"
-                  disabled={!canProceedStep2}
-                  onClick={() => setStep(3)}
-                  data-testid="button-next-step2"
-                >
-                  Continue <ChevronRight className="ml-1 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-3" data-testid="text-logo-step2">
+            FailSafe
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Almost there!
+          </p>
+        </div>
 
-          {step === 3 && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold mb-1">Almost there!</h2>
-                <p className="text-sm text-muted-foreground mb-4">Help us match you better (all optional)</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-3 block">How do you prefer to learn?</Label>
-                <RadioGroup value={learningStyle} onValueChange={setLearningStyle}>
-                  {["Solo", "Group", "Both"].map((opt) => (
-                    <div key={opt} className="flex items-center gap-2">
-                      <RadioGroupItem value={opt} id={`learn-${opt}`} />
-                      <Label htmlFor={`learn-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-3 block">What's your availability?</Label>
-                <RadioGroup value={availability} onValueChange={setAvailability}>
-                  {["Weekdays", "Weekends", "Flexible"].map((opt) => (
-                    <div key={opt} className="flex items-center gap-2">
-                      <RadioGroupItem value={opt} id={`avail-${opt}`} />
-                      <Label htmlFor={`avail-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-3 block">Preferred accountability style?</Label>
-                <RadioGroup value={accountabilityStyle} onValueChange={setAccountabilityStyle}>
-                  {["Daily check-ins", "Weekly goals", "Milestone-based"].map((opt) => (
-                    <div key={opt} className="flex items-center gap-2">
-                      <RadioGroupItem value={opt} id={`acc-${opt}`} />
-                      <Label htmlFor={`acc-${opt}`} className="text-sm cursor-pointer">{opt}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(2)} data-testid="button-back-step3">
-                  <ChevronLeft className="mr-1 w-4 h-4" /> Back
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => createUser.mutate()}
-                  disabled={createUser.isPending}
-                  data-testid="button-create-account"
-                >
-                  {createUser.isPending ? "Creating..." : "Join FailSafe"}
-                  <ArrowRight className="ml-1 w-4 h-4" />
-                </Button>
-              </div>
-              <button
-                className="w-full text-center text-xs text-muted-foreground hover:underline"
-                onClick={() => createUser.mutate()}
-                data-testid="button-skip"
-              >
-                Skip preferences and join now
-              </button>
-            </div>
-          )}
-        </Card>
+        <div className="bg-card rounded-2xl shadow-lg border p-6 sm:p-8 space-y-6">
+          <div>
+            <label className="block text-xl font-bold mb-3">
+              Want to share more? (Optional)
+            </label>
+            <textarea
+              rows={4}
+              maxLength={300}
+              placeholder="Tell us about your experience..."
+              value={failureDescription}
+              onChange={(e) => setFailureDescription(e.target.value.slice(0, 300))}
+              className="w-full px-5 py-3.5 bg-background rounded-xl border-2 border-border focus:border-primary focus:ring-0 focus:outline-none resize-none transition-colors text-sm"
+              data-testid="textarea-failure-description"
+            />
+            <p className="text-xs text-muted-foreground mt-2 text-right">
+              {failureDescription.length}/300
+            </p>
+          </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Everything is anonymous. No email or password needed.
-        </p>
+          <div>
+            <label className="block text-sm font-semibold mb-2">
+              Availability
+            </label>
+            <select
+              value={availability}
+              onChange={(e) => setAvailability(e.target.value)}
+              className="w-full px-5 py-3.5 bg-background rounded-xl border-2 border-border focus:border-primary focus:ring-0 focus:outline-none transition-colors text-sm"
+              data-testid="select-availability"
+            >
+              <option value="">Flexible</option>
+              <option value="Weekday mornings">Weekday mornings</option>
+              <option value="Weekday evenings">Weekday evenings</option>
+              <option value="Weekends">Weekends</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setStep(1)}
+              className="rounded-xl font-semibold"
+              data-testid="button-back-step2"
+            >
+              <ArrowLeft className="mr-2 w-4 h-4" /> Back
+            </Button>
+            <Button
+              size="lg"
+              onClick={() => createUser.mutate()}
+              disabled={createUser.isPending}
+              className="flex-1 rounded-xl font-bold bg-gradient-to-r from-primary to-accent border-0"
+              data-testid="button-create-account"
+            >
+              {createUser.isPending ? (
+                <span className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Finding your matches...
+                </span>
+              ) : (
+                "Find My Matches"
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

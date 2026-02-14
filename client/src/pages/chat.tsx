@@ -10,7 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import type { Message, ChatRoom, Challenge } from "@shared/schema";
-import { Send, CheckCircle2, Clock, Users, Zap } from "lucide-react";
+import { Send, CheckCircle2, Clock, Users, Zap, User } from "lucide-react";
+
+interface ChatRoomWithPartners extends ChatRoom {
+  partnerUsernames?: string[];
+}
 
 export default function Chat() {
   const [, params] = useRoute("/chat/:roomId");
@@ -22,7 +26,7 @@ export default function Chat() {
   const currentUserId = localStorage.getItem("failsafe_user_id") || "";
   const currentUsername = localStorage.getItem("failsafe_username") || "";
 
-  const { data: room } = useQuery<ChatRoom>({
+  const { data: room } = useQuery<ChatRoomWithPartners>({
     queryKey: ["/api/chat", roomId, "room"],
     enabled: !!roomId,
   });
@@ -107,11 +111,21 @@ export default function Chat() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="border-b p-3 flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Users className="w-4 h-4 text-primary" />
-          <h2 className="font-semibold text-sm" data-testid="text-room-name">
-            {room?.roomName || "Chat Room"}
-          </h2>
+          <div>
+            <h2 className="font-semibold text-sm" data-testid="text-room-name">
+              {room?.roomName || "Chat Room"}
+            </h2>
+            {room?.partnerUsernames && room.partnerUsernames.length > 0 && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1" data-testid="text-partner-usernames">
+                <User className="w-3 h-3" />
+                {room.partnerUsernames
+                  .filter((u) => u !== currentUsername)
+                  .join(", ") || room.partnerUsernames.join(", ")}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

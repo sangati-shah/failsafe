@@ -84,6 +84,9 @@ Uses localStorage (failsafe_user_id, failsafe_username) - no email/password need
 - Weekly check-in: +15
 
 ## Design
-- Color palette: soft purples (primary), warm oranges (accent), calming blues (chart-3)
+- Color palette: pink/fuchsia (primary), green (accent), clean white backgrounds
+- Onboarding: gradient backgrounds (pink-to-green), rounded-2xl cards, modern immersive 3-screen flow
+- Encouragement icon: HeartHandshake (support-themed, not a plain heart)
+- Chat rooms show partner's username in header
 - Font: Inter
 - Dark mode support via class-based toggle

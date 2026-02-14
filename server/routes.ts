@@ -189,7 +189,13 @@ export async function registerRoutes(
     try {
       const room = await storage.getChatRoom(req.params.roomId);
       if (!room) return res.status(404).json({ message: "Room not found" });
-      res.json(room);
+      const match = await storage.getMatchById(room.matchId);
+      let partnerUsernames: string[] = [];
+      if (match?.userIds) {
+        const users = await Promise.all(match.userIds.map((uid) => storage.getUser(uid)));
+        partnerUsernames = users.filter(Boolean).map((u) => u!.username);
+      }
+      res.json({ ...room, partnerUsernames });
     } catch (e: any) {
       res.status(500).json({ message: e.message });
     }
