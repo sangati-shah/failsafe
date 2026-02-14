@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { SAMPLE_CHALLENGES, ROOM_NAME_ADJECTIVES, ROOM_NAME_NOUNS, POINTS } from "./constants";
+import { ROOM_NAME_ADJECTIVES, ROOM_NAME_NOUNS, POINTS } from "./constants";
 import { insertUserSchema, insertPostSchema, insertMessageSchema, insertWeeklyCheckinSchema } from "@shared/schema";
+import { generateEncouragement, generateChallenge, generateSupportResponse } from "./minimax";
 
 const chatRoomClients: Map<string, Set<WebSocket>> = new Map();
 
@@ -13,9 +14,6 @@ function generateRoomName(): string {
   return `The ${adj} ${noun}`;
 }
 
-function getRandomChallenge(): string {
-  return SAMPLE_CHALLENGES[Math.floor(Math.random() * SAMPLE_CHALLENGES.length)];
-}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -95,7 +93,8 @@ export async function registerRoutes(
       const post = await storage.createPost(parsed);
       await storage.updateUserPoints(parsed.userId, POINTS.POST_FAILURE);
       await storage.addUserBadge(parsed.userId, "courage");
-      res.json(post);
+      const aiSupport = await generateSupportResponse(parsed.content);
+      res.json({ ...post, aiSupport });
     } catch (e: any) {
       res.status(400).json({ message: e.message });
     }
@@ -108,7 +107,8 @@ export async function registerRoutes(
       if (!post) return res.status(404).json({ message: "Post not found" });
       await storage.updateUserPoints(userId, POINTS.GIVE_ENCOURAGEMENT);
       await storage.updateUserPoints(post.userId, POINTS.RECEIVE_ENCOURAGEMENT);
-      res.json(post);
+      const aiMessage = await generateEncouragement(post.content);
+      res.json({ ...post, aiEncouragement: aiMessage });
     } catch (e: any) {
       res.status(500).json({ message: e.message });
     }
@@ -146,7 +146,7 @@ export async function registerRoutes(
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      const candidates = await storage.getUsersByCategory(user.category, userId);
+      const candidates = await storage.getUsersByCategory(user.category || "General", userId);
       if (candidates.length === 0) {
         return res.status(404).json({ message: "No matches found yet. Check back later!" });
       }
@@ -162,13 +162,14 @@ export async function registerRoutes(
 
       const match = await storage.createMatch({
         userIds: [userId, matchPartner.id],
-        category: user.category,
+        category: user.category || "General",
         chatRoomId: room.id,
       });
 
       await storage.updateChatRoomMatchId(room.id, match.id);
 
-      const challenge = getRandomChallenge();
+      const allFailures = [...(user.failures || []), ...(matchPartner.failures || [])];
+      const challenge = await generateChallenge(allFailures, user.goal);
       await storage.createChallenge({
         chatRoomId: room.id,
         challenge,

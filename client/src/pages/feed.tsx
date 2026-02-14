@@ -1,19 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CATEGORIES, FAILURES_BY_CATEGORY } from "@/lib/constants";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Post, User } from "@shared/schema";
-import { Heart, Plus, TrendingUp, Clock, Trophy, Flame, Star, Zap, Target } from "lucide-react";
+import { Heart, Plus, TrendingUp, Trophy, Flame, Star, Zap, Target, Sparkles } from "lucide-react";
 
 function FailureCard({ post, currentUserId }: { post: Post; currentUserId: string }) {
   const { toast } = useToast();
@@ -24,18 +20,16 @@ function FailureCard({ post, currentUserId }: { post: Post; currentUserId: strin
       const res = await apiRequest("POST", `/api/posts/${post.id}/encourage`, { userId: currentUserId });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
-      toast({ title: "Encouragement sent!", description: "+5 points for supporting someone" });
+      if (data.aiEncouragement) {
+        toast({ title: "Encouragement sent!", description: data.aiEncouragement });
+      } else {
+        toast({ title: "Encouragement sent!", description: "+5 points for supporting someone" });
+      }
     },
   });
-
-  const severityColor = (s: number | null) => {
-    if (!s || s <= 2) return "bg-chart-3/10 text-chart-3";
-    if (s <= 3) return "bg-accent/20 text-accent-foreground";
-    return "bg-destructive/10 text-destructive";
-  };
 
   const timeAgo = (date: Date | string | null) => {
     if (!date) return "";
@@ -53,12 +47,7 @@ function FailureCard({ post, currentUserId }: { post: Post; currentUserId: strin
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium" data-testid={`text-username-${post.id}`}>{post.username}</span>
-          <Badge variant="secondary" className="text-xs">{post.category}</Badge>
-          {post.severity && (
-            <span className={`text-xs px-2 py-0.5 rounded-full ${severityColor(post.severity)}`}>
-              Lvl {post.severity}
-            </span>
-          )}
+          {post.category && <Badge variant="secondary" className="text-xs">{post.category}</Badge>}
         </div>
         <span className="text-xs text-muted-foreground">{timeAgo(post.createdAt)}</span>
       </div>
@@ -72,7 +61,7 @@ function FailureCard({ post, currentUserId }: { post: Post; currentUserId: strin
           data-testid={`button-encourage-${post.id}`}
         >
           <Heart className={`w-3.5 h-3.5 mr-1.5 ${hasEncouraged ? "fill-current" : ""}`} />
-          {post.encouragements || 0}
+          {encourage.isPending ? <Sparkles className="w-3 h-3 animate-spin" /> : (post.encouragements || 0)}
         </Button>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <TrendingUp className="w-3 h-3" />

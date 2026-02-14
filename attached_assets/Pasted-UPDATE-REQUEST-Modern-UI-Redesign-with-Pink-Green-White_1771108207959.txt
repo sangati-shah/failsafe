@@ -1,0 +1,330 @@
+UPDATE REQUEST: Modern UI Redesign with Pink/Green/White Color Scheme
+Transform FailSafe's onboarding UI to be more modern, visually appealing, and engaging. Replace the current 3-step progress indicator with a cleaner, more immersive design.
+
+NEW COLOR SCHEME
+Update client/tailwind.config.js:
+jsexport default {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#fdf4ff',
+          100: '#fae8ff',
+          200: '#f5d0fe',
+          300: '#f0abfc',
+          400: '#e879f9',
+          500: '#d946ef',  // Main pink
+          600: '#c026d3',
+          700: '#a21caf',
+        },
+        accent: {
+          50: '#f0fdf4',
+          100: '#dcfce7',
+          200: '#bbf7d0',
+          300: '#86efac',
+          400: '#4ade80',
+          500: '#22c55e',  // Main green
+          600: '#16a34a',
+          700: '#15803d',
+        },
+        dark: {
+          900: '#1a0b2e',  // Deep purple-black
+          800: '#2d1b4e',
+        }
+      },
+    },
+  },
+  plugins: [],
+};
+
+REDESIGNED ONBOARDING FLOW
+Replace client/src/pages/Onboarding.jsx with this modern version:
+jsximport { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const COMMON_FAILURES = [
+  'Failed interview',
+  'Rejected promotion',
+  'Laid off',
+  'Startup failed',
+  'Product launch flopped',
+  'Lost major client',
+  'Funding rejected',
+  'Failed exam',
+  'Rejected from program',
+  'Quit exercise routine',
+  'Diet failed',
+  'Breakup',
+  'Family conflict',
+  'Writer\'s block',
+  'Project abandoned',
+  'Burnout',
+  'Imposter syndrome'
+];
+
+function Onboarding() {
+  const navigate = useNavigate();
+  const [step, setStep] = useState(0);
+  const [formData, setFormData] = useState({
+    goal: '',
+    selectedFailures: [],
+    failureDescription: '',
+    location: '',
+    availability: []
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.post('http://localhost:3001/api/users', formData);
+      const user = response.data;
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('username', user.username);
+      navigate(`/match/${user.id}`);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to submit. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleFailure = (failure) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedFailures: prev.selectedFailures.includes(failure)
+        ? prev.selectedFailures.filter(f => f !== failure)
+        : [...prev.selectedFailures, failure]
+    }));
+  };
+
+  // Landing page (step 0)
+  if (step === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 flex items-center justify-center p-4">
+        <div className="max-w-xl w-full text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-7xl font-bold text-primary-500 mb-4">
+              FailSafe
+            </h1>
+            <p className="text-2xl text-gray-600 font-medium">
+              Turn your setbacks into comebacks, together.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-2xl p-10 space-y-6">
+            <div>
+              <label className="block text-left text-lg font-semibold text-gray-800 mb-3">
+                What should we call you?
+              </label>
+              <input
+                type="text"
+                placeholder="AnonymousPhoenix"
+                disabled
+                value="AnonymousPhoenix"
+                className="w-full px-6 py-4 bg-gray-50 text-gray-400 rounded-2xl text-lg border-2 border-gray-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-left text-lg font-semibold text-gray-800 mb-3">
+                What's your big goal?
+              </label>
+              <input
+                type="text"
+                placeholder="Launch my startup, run a marathon..."
+                value={formData.goal}
+                onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
+                className="w-full px-6 py-4 bg-gray-50 rounded-2xl text-lg border-2 border-gray-200 focus:border-primary-400 focus:ring-0 focus:outline-none transition-colors"
+                autoFocus
+              />
+            </div>
+
+            <button
+              onClick={() => formData.goal.trim() && setStep(1)}
+              disabled={!formData.goal.trim()}
+              className="w-full bg-dark-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-dark-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+            >
+              Start Journey →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 1: Failures Checklist
+  if (step === 1) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-bold text-primary-500 mb-3">
+              FailSafe
+            </h1>
+            <p className="text-xl text-gray-600">
+              Share your setbacks
+            </p>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                What challenges have you faced?
+              </h2>
+              <p className="text-gray-500 mb-6">Select all that apply</p>
+              
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                {COMMON_FAILURES.map(failure => (
+                  <label
+                    key={failure}
+                    className={`flex items-center space-x-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${
+                      formData.selectedFailures.includes(failure)
+                        ? 'border-primary-400 bg-primary-50 shadow-md scale-105'
+                        : 'border-gray-100 hover:border-primary-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      formData.selectedFailures.includes(failure)
+                        ? 'border-primary-500 bg-primary-500'
+                        : 'border-gray-300'
+                    }`}>
+                      {formData.selectedFailures.includes(failure) && (
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-gray-800 font-medium flex-1">{failure}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button
+                onClick={() => setStep(0)}
+                className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-2xl font-semibold hover:bg-gray-50 transition-all"
+              >
+                ← Back
+              </button>
+              <button
+                onClick={() => setStep(2)}
+                disabled={formData.selectedFailures.length === 0}
+                className="flex-1 bg-dark-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-dark-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg"
+              >
+                Continue →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Optional Details
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-green-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-primary-500 mb-3">
+            FailSafe
+          </h1>
+          <p className="text-xl text-gray-600">
+            Almost there!
+          </p>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-2xl p-8 space-y-6">
+          <div>
+            <label className="block text-xl font-bold text-gray-800 mb-3">
+              Want to share more? (Optional)
+            </label>
+            <textarea
+              rows={4}
+              maxLength={300}
+              placeholder="Tell us about your experience..."
+              value={formData.failureDescription}
+              onChange={(e) => setFormData({ ...formData, failureDescription: e.target.value })}
+              className="w-full px-6 py-4 bg-gray-50 rounded-2xl border-2 border-gray-200 focus:border-primary-400 focus:ring-0 focus:outline-none resize-none transition-colors"
+            />
+            <p className="text-sm text-gray-400 mt-2 text-right">
+              {formData.failureDescription.length}/300
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                placeholder="San Francisco"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-5 py-4 bg-gray-50 rounded-2xl border-2 border-gray-200 focus:border-primary-400 focus:ring-0 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Availability
+              </label>
+              <select
+                value={formData.availability[0] || ''}
+                onChange={(e) => setFormData({ ...formData, availability: e.target.value ? [e.target.value] : [] })}
+                className="w-full px-5 py-4 bg-gray-50 rounded-2xl border-2 border-gray-200 focus:border-primary-400 focus:ring-0 focus:outline-none transition-colors"
+              >
+                <option value="">Flexible</option>
+                <option value="Weekday mornings">Weekday mornings</option>
+                <option value="Weekday evenings">Weekday evenings</option>
+                <option value="Weekends">Weekends</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button
+              onClick={() => setStep(1)}
+              className="px-8 py-4 border-2 border-gray-200 text-gray-700 rounded-2xl font-semibold hover:bg-gray-50 transition-all"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-primary-500 to-accent-500 text-white py-5 rounded-2xl font-bold text-lg hover:shadow-2xl hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all shadow-lg"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  Finding your matches...
+                </span>
+              ) : (
+                'Find My Matches ✨'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Onboarding;
+
+KEY CHANGES
+✅ Removed step progress bar - cleaner, more immersive flow
+✅ Landing page redesign - shows anonymous username placeholder + big goal input
+✅ Pink/Green/White color scheme - fresh, modern, approachable
+✅ Dark CTA buttons - deep purple-black for high contrast
+✅ Custom checkboxes - rounded circles with smooth animations
+✅ Larger text - improved readability
+✅ Softer shadows - more elegant depth
+✅ Gradient final button - pink-to-green gradient for "Find My Matches"
+✅ Better spacing - more breathing room throughout
+
+Deploy this and the UI will match the modern, clean aesthetic from the second screenshot!
