@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -9,12 +9,31 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import type { Message, ChatRoom, Challenge } from "@shared/schema";
-import { Send, CheckCircle2, Clock, Users, Zap, User } from "lucide-react";
+import type { Message, ChatRoom } from "@shared/schema";
+import { Send, CheckCircle2, Clock, Users, Zap, User, Eye, EyeOff, Linkedin, CalendarHeart } from "lucide-react";
+import confetti from "canvas-confetti";
 
-interface ChatRoomWithPartners extends ChatRoom {
-  partnerUsernames?: string[];
+interface PartnerProfile {
+  userId: string;
+  username: string;
+  linkedinUrl: string | null;
 }
+
+interface ChatRoomWithPartners extends Omit<ChatRoom, 'matchId'> {
+  matchId?: string;
+  partnerUsernames?: string[];
+  profilesRevealed?: string[];
+  allProfilesRevealed?: boolean;
+  partnerProfiles?: PartnerProfile[];
+}
+
+const SUGGESTED_EVENTS = [
+  { title: "AI Meets Robotics - Launch & Fund Your Own Startup", date: "Feb 15", url: "https://luma.com/ai-meets-robotics-sf" },
+  { title: "Build What You Love - Women in Tech Hackathon", date: "Feb 15", url: "https://luma.com/ic3l89gi" },
+  { title: "Future of AI - Fireside w/ CTO of Microsoft For Startups", date: "Feb 16", url: "https://luma.com/CTO-Microsoft" },
+  { title: "Agentic + AI Observability Meetup SF", date: "Feb 17", url: "https://luma.com/8kbfjhlu" },
+  { title: "Skills Launch Party", date: "Feb 17", url: "https://luma.com/5tttu03l" },
+];
 
 export default function Chat() {
   const [, params] = useRoute("/chat/:roomId");
@@ -36,7 +55,7 @@ export default function Chat() {
     enabled: !!roomId,
   });
 
-  const { data: challenge } = useQuery<Challenge | null>({
+  const { data: challenge } = useQuery<{ id: string; challenge: string; estimatedTime?: number; completedBy?: string[] } | null>({
     queryKey: ["/api/chat", roomId, "challenge"],
     enabled: !!roomId,
   });
@@ -98,6 +117,42 @@ export default function Chat() {
       queryClient.invalidateQueries({ queryKey: ["/api/chat", roomId, "challenge"] });
       queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
       toast({ title: "Challenge completed!", description: "+20 points earned!" });
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#8b5cf6", "#a78bfa", "#22c55e", "#4ade80", "#fbbf24"],
+      });
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ["#8b5cf6", "#a78bfa", "#22c55e", "#4ade80"],
+        });
+        confetti({
+          particleCount: 80,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ["#8b5cf6", "#a78bfa", "#22c55e", "#4ade80"],
+        });
+      }, 250);
+    },
+  });
+
+  const revealProfile = useMutation({
+    mutationFn: async () => {
+      if (!room?.matchId) return;
+      const res = await apiRequest("POST", `/api/matches/${room.matchId}/reveal`, {
+        userId: currentUserId,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat", roomId, "room"] });
+      toast({ title: "Profile reveal requested!", description: "Your match will see your request. Once both opt in, profiles will be shared." });
     },
   });
 
@@ -107,6 +162,8 @@ export default function Chat() {
   };
 
   const challengeCompleted = challenge?.completedBy?.includes(currentUserId);
+  const hasOptedIn = room?.profilesRevealed?.includes(currentUserId);
+  const suggestedEvent = SUGGESTED_EVENTS[Math.floor(Math.abs(roomId.charCodeAt(0)) % SUGGESTED_EVENTS.length)];
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -162,6 +219,79 @@ export default function Chat() {
           </div>
         </Card>
       )}
+
+      <Card className="mx-3 mt-1 p-3 border-accent/20 bg-accent/5" data-testid="card-profile-reveal">
+        <div className="flex items-start gap-2">
+          {room?.allProfilesRevealed ? (
+            <Eye className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+          ) : (
+            <EyeOff className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            {room?.allProfilesRevealed ? (
+              <div>
+                <p className="text-xs font-medium text-accent mb-2" data-testid="text-profiles-revealed">Profiles Revealed</p>
+                <div className="space-y-2">
+                  {room.partnerProfiles?.map((p) => (
+                    <div key={p.userId} className="flex items-center gap-2 flex-wrap" data-testid={`text-partner-profile-${p.userId}`}>
+                      <span className="text-sm font-medium">{p.username}</span>
+                      {p.linkedinUrl && (
+                        <a
+                          href={p.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          data-testid={`link-linkedin-${p.userId}`}
+                        >
+                          <Linkedin className="w-3 h-3" /> LinkedIn
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-2.5 rounded-lg bg-background border">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <CalendarHeart className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs font-medium">Meet up at an event?</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2" data-testid="text-suggested-event">{suggestedEvent.title} - {suggestedEvent.date}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(suggestedEvent.url, "_blank")}
+                    data-testid="button-suggested-event"
+                  >
+                    View Event
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-medium mb-1" data-testid="text-share-details-title">Share Personal Details</p>
+                <p className="text-xs text-muted-foreground mb-2" data-testid="text-share-details-description">
+                  Both you and your match must opt in before profiles are revealed.
+                  {hasOptedIn && " Waiting for your match to opt in..."}
+                </p>
+                {hasOptedIn ? (
+                  <Badge variant="secondary" className="text-xs" data-testid="badge-opted-in">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> You opted in
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => revealProfile.mutate()}
+                    disabled={revealProfile.isPending}
+                    data-testid="button-reveal-profile"
+                  >
+                    <Eye className="w-3 h-3 mr-1" /> Opt In to Share
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <ScrollArea className="flex-1 p-3">
         <div className="space-y-3 max-w-3xl mx-auto">

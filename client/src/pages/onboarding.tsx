@@ -7,26 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Check, ArrowRight, ArrowLeft, Loader2, Linkedin } from "lucide-react";
 
-const COMMON_FAILURES = [
-  "Failed interview",
-  "Rejected promotion",
-  "Laid off",
-  "Startup failed",
-  "Product launch flopped",
-  "Lost major client",
-  "Funding rejected",
-  "Failed exam",
-  "Rejected from program",
-  "Quit exercise routine",
-  "Diet failed",
-  "Breakup",
-  "Family conflict",
-  "Writer's block",
-  "Project abandoned",
-  "Burnout",
-  "Imposter syndrome",
-];
-
 const MAX_FAILURES = 5;
 
 export default function Onboarding() {
@@ -36,14 +16,22 @@ export default function Onboarding() {
   const [goal, setGoal] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [selectedFailures, setSelectedFailures] = useState<string[]>([]);
+  const [suggestedFailures, setSuggestedFailures] = useState<string[]>([]);
+  const [otherText, setOtherText] = useState("");
+  const [otherSelected, setOtherSelected] = useState(false);
+  const [loadingFailures, setLoadingFailures] = useState(false);
 
   const createUser = useMutation({
     mutationFn: async () => {
       const username = generateUsername();
+      const allFailures = [...selectedFailures];
+      if (otherSelected && otherText.trim()) {
+        allFailures.push(otherText.trim());
+      }
       const res = await apiRequest("POST", "/api/users", {
         username,
         goal,
-        failures: selectedFailures,
+        failures: allFailures,
         linkedinUrl: linkedinUrl || null,
         points: 0,
         badges: [],
@@ -62,13 +50,41 @@ export default function Onboarding() {
     },
   });
 
+  const handleNextStep = async () => {
+    if (!goal.trim()) return;
+    setLoadingFailures(true);
+    try {
+      const res = await apiRequest("POST", "/api/generate-failures", { goal: goal.trim() });
+      const data = await res.json();
+      if (data.failures && Array.isArray(data.failures)) {
+        setSuggestedFailures(data.failures.slice(0, 4));
+      }
+    } catch {
+      setSuggestedFailures(["Unexpected setback", "Lost motivation", "Imposter syndrome", "Burnout"]);
+    }
+    setLoadingFailures(false);
+    setStep(1);
+  };
+
   const toggleFailure = (f: string) => {
     setSelectedFailures((prev) => {
+      const totalSelected = prev.length + (otherSelected ? 1 : 0);
       if (prev.includes(f)) return prev.filter((x) => x !== f);
-      if (prev.length >= MAX_FAILURES) return prev;
+      if (totalSelected >= MAX_FAILURES) return prev;
       return [...prev, f];
     });
   };
+
+  const toggleOther = () => {
+    const totalSelected = selectedFailures.length + (otherSelected ? 1 : 0);
+    if (otherSelected) {
+      setOtherSelected(false);
+    } else if (totalSelected < MAX_FAILURES) {
+      setOtherSelected(true);
+    }
+  };
+
+  const totalSelected = selectedFailures.length + (otherSelected && otherText.trim() ? 1 : 0);
 
   if (step === 0) {
     return (
@@ -133,17 +149,24 @@ export default function Onboarding() {
 
             <Button
               size="lg"
-              onClick={() => goal.trim() && setStep(1)}
-              disabled={!goal.trim()}
+              onClick={handleNextStep}
+              disabled={!goal.trim() || loadingFailures}
               className="w-full rounded-xl font-bold"
               data-testid="button-start-journey"
             >
-              Start Journey <ArrowRight className="ml-2 w-5 h-5" />
+              {loadingFailures ? (
+                <span className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Preparing your journey...
+                </span>
+              ) : (
+                <>Start Journey <ArrowRight className="ml-2 w-5 h-5" /></>
+              )}
             </Button>
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Everything is anonymous. No email or password needed.
+            Everything is anonymous.
           </p>
         </div>
       </div>
@@ -167,12 +190,13 @@ export default function Onboarding() {
             <h2 className="text-xl font-bold mb-2">
               What challenges have you faced?
             </h2>
-            <p className="text-muted-foreground mb-6">Select up to {MAX_FAILURES}</p>
+            <p className="text-muted-foreground mb-6">Select up to {MAX_FAILURES} related to your goal</p>
 
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-              {COMMON_FAILURES.map((failure) => {
+            <div className="space-y-2">
+              {suggestedFailures.map((failure) => {
                 const isSelected = selectedFailures.includes(failure);
-                const isDisabled = !isSelected && selectedFailures.length >= MAX_FAILURES;
+                const currentTotal = selectedFailures.length + (otherSelected ? 1 : 0);
+                const isDisabled = !isSelected && currentTotal >= MAX_FAILURES;
                 return (
                   <div
                     key={failure}
@@ -199,6 +223,44 @@ export default function Onboarding() {
                   </div>
                 );
               })}
+
+              <div
+                onClick={toggleOther}
+                className={`flex items-center gap-4 p-3.5 rounded-xl transition-all border-2 ${
+                  otherSelected
+                    ? "border-primary bg-primary/5 cursor-pointer"
+                    : selectedFailures.length + (otherSelected ? 1 : 0) >= MAX_FAILURES
+                    ? "border-border opacity-40 cursor-not-allowed"
+                    : "border-border hover-elevate cursor-pointer"
+                }`}
+                data-testid="checkbox-failure-other"
+              >
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                  otherSelected
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground/30"
+                }`}>
+                  {otherSelected && (
+                    <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                  )}
+                </div>
+                <span className="text-sm font-medium flex-1">Other</span>
+              </div>
+
+              {otherSelected && (
+                <div className="pl-10">
+                  <input
+                    type="text"
+                    placeholder="Describe your challenge..."
+                    value={otherText}
+                    onChange={(e) => setOtherText(e.target.value.slice(0, 100))}
+                    maxLength={100}
+                    className="w-full px-4 py-3 bg-background rounded-xl text-sm border-2 border-border focus:border-primary focus:ring-0 focus:outline-none transition-colors"
+                    autoFocus
+                    data-testid="input-other-failure"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -215,7 +277,7 @@ export default function Onboarding() {
             <Button
               size="lg"
               onClick={() => createUser.mutate()}
-              disabled={selectedFailures.length === 0 || createUser.isPending}
+              disabled={totalSelected === 0 || createUser.isPending}
               className="flex-1 rounded-xl font-bold bg-gradient-to-r from-primary to-accent border-0"
               data-testid="button-create-account"
             >

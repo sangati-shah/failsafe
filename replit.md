@@ -34,15 +34,19 @@ shared/
 ```
 
 ## Key Features
-- Anonymous onboarding (2 steps: goal + LinkedIn URL, failures checklist max 5)
+- Anonymous onboarding (2 steps: goal + LinkedIn URL, AI-generated failures max 5 with "Other" write-in)
 - Auto-generated usernames (Adjective_Noun_Number)
 - Optional LinkedIn profile URL during onboarding
+- AI-generated goal-specific failure options during onboarding (4 AI suggestions + "Other" write-in)
 - Failure feed with AI-powered encouragement system
 - AI support response when posting failures (MiniMax)
 - AI-generated personalized daily challenges
+- Confetti celebration on challenge completion (canvas-confetti)
 - Leaderboard titled "The Bounce-Back Board"
 - Matching system (matches by shared failures, not category)
 - Real-time WebSocket chat rooms
+- Profile reveal opt-in (both parties must opt-in before sharing LinkedIn/personal details)
+- Event meetup suggestions when profiles are revealed
 - Profile with badges, "I Tried Again!" button
 - Weekly check-ins
 - Events page (Luma SF events with user attendance tracking)
@@ -75,7 +79,9 @@ shared/
 - `POST /api/posts` - Post a failure (+10pts)
 - `POST /api/posts/:id/encourage` - Encourage (+5 giver, +2 receiver)
 - `GET /api/leaderboard` - Top users by points
+- `POST /api/generate-failures` - AI-generated goal-specific failure options
 - `POST /api/matches/find` - Find match by shared failures
+- `POST /api/matches/:matchId/reveal` - Opt-in to reveal profile to match
 - `GET /api/matches/:userId` - Get user matches
 - `GET /api/chat/:roomId/room` - Get chat room info
 - `GET /api/chat/:roomId/messages` - Get messages

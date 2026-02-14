@@ -87,6 +87,53 @@ export async function generateSupportResponse(postContent: string): Promise<stri
   }
 }
 
+export async function generateGoalFailures(goal: string): Promise<string[]> {
+  try {
+    const response = await client.chat.completions.create({
+      model: "MiniMax-M1",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant for a community app about overcoming setbacks. Given a user's goal, generate exactly 4 common challenges or setbacks people face when pursuing that specific goal. Return ONLY a JSON array of 4 short strings (each 2-5 words). No numbering, no explanation, just the JSON array. Example: [\"Failed interview\",\"Imposter syndrome\",\"Burnout\",\"Rejected promotion\"]",
+        },
+        {
+          role: "user",
+          content: `Goal: "${goal}". What are 4 common setbacks people face pursuing this goal?`,
+        },
+      ],
+      max_tokens: 150,
+      temperature: 0.7,
+    });
+    const content = response.choices[0]?.message?.content?.trim() || "";
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed) && parsed.length >= 4) {
+      return parsed.slice(0, 4).map((s: string) => String(s).trim());
+    }
+    return getFallbackGoalFailures(goal);
+  } catch (e) {
+    console.error("MiniMax goal failures error:", e);
+    return getFallbackGoalFailures(goal);
+  }
+}
+
+function getFallbackGoalFailures(goal: string): string[] {
+  const lower = goal.toLowerCase();
+  if (lower.includes("startup") || lower.includes("business") || lower.includes("company")) {
+    return ["Funding rejected", "Co-founder conflict", "Product-market fit issues", "Burnout"];
+  }
+  if (lower.includes("job") || lower.includes("career") || lower.includes("interview")) {
+    return ["Failed interview", "Rejected promotion", "Imposter syndrome", "Burnout"];
+  }
+  if (lower.includes("fitness") || lower.includes("marathon") || lower.includes("health") || lower.includes("weight")) {
+    return ["Quit exercise routine", "Diet failed", "Injury setback", "Lost motivation"];
+  }
+  if (lower.includes("learn") || lower.includes("study") || lower.includes("degree") || lower.includes("exam")) {
+    return ["Failed exam", "Rejected from program", "Writer's block", "Imposter syndrome"];
+  }
+  return ["Unexpected setback", "Lost motivation", "Imposter syndrome", "Burnout"];
+}
+
 function getFallbackEncouragement(): string {
   const messages = [
     "Every setback is a setup for a comeback. You got this.",

@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { ROOM_NAME_ADJECTIVES, ROOM_NAME_NOUNS, POINTS } from "./constants";
 import { insertUserSchema, insertPostSchema, insertMessageSchema, insertWeeklyCheckinSchema } from "@shared/schema";
-import { generateEncouragement, generateChallenge, generateSupportResponse } from "./minimax";
+import { generateEncouragement, generateChallenge, generateSupportResponse, generateGoalFailures } from "./minimax";
 
 const chatRoomClients: Map<string, Set<WebSocket>> = new Map();
 
@@ -28,6 +28,19 @@ export async function registerRoutes(
       res.json(user);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/generate-failures", async (req, res) => {
+    try {
+      const { goal } = req.body;
+      if (!goal || typeof goal !== "string") {
+        return res.status(400).json({ message: "Goal is required" });
+      }
+      const failures = await generateGoalFailures(goal);
+      res.json({ failures });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
     }
   });
 
@@ -202,6 +215,17 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/matches/:matchId/reveal", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      const match = await storage.revealProfile(req.params.matchId, userId);
+      if (!match) return res.status(404).json({ message: "Match not found" });
+      res.json(match);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
   // ---- CHAT ----
   app.get("/api/chat/:roomId/room", async (req, res) => {
     try {
@@ -209,11 +233,26 @@ export async function registerRoutes(
       if (!room) return res.status(404).json({ message: "Room not found" });
       const match = await storage.getMatchById(room.matchId);
       let partnerUsernames: string[] = [];
+      let partnerProfiles: { userId: string; username: string; linkedinUrl: string | null }[] = [];
       if (match?.userIds) {
-        const users = await Promise.all(match.userIds.map((uid) => storage.getUser(uid)));
-        partnerUsernames = users.filter(Boolean).map((u) => u!.username);
+        const fetchedUsers = await Promise.all(match.userIds.map((uid) => storage.getUser(uid)));
+        partnerUsernames = fetchedUsers.filter(Boolean).map((u) => u!.username);
+        partnerProfiles = fetchedUsers.filter(Boolean).map((u) => ({
+          userId: u!.id,
+          username: u!.username,
+          linkedinUrl: u!.linkedinUrl,
+        }));
       }
-      res.json({ ...room, partnerUsernames });
+      const allRevealed = match?.profilesRevealed && match.userIds &&
+        match.userIds.every((uid) => match.profilesRevealed?.includes(uid));
+      res.json({
+        ...room,
+        partnerUsernames,
+        matchId: match?.id,
+        profilesRevealed: match?.profilesRevealed || [],
+        allProfilesRevealed: !!allRevealed,
+        partnerProfiles: allRevealed ? partnerProfiles : [],
+      });
     } catch (e: any) {
       res.status(500).json({ message: e.message });
     }

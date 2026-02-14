@@ -39,6 +39,8 @@ export interface IStorage {
 
   createWeeklyCheckin(checkin: InsertWeeklyCheckin): Promise<WeeklyCheckin>;
 
+  revealProfile(matchId: string, userId: string): Promise<Match | undefined>;
+  getMatchByChatRoom(chatRoomId: string): Promise<Match | undefined>;
   getAllUsers(): Promise<User[]>;
   getUsersByCategory(category: string, excludeUserId: string): Promise<User[]>;
   updateChatRoomMatchId(roomId: string, matchId: string): Promise<void>;
@@ -190,6 +192,24 @@ export class DatabaseStorage implements IStorage {
   async createWeeklyCheckin(checkin: InsertWeeklyCheckin): Promise<WeeklyCheckin> {
     const [created] = await db.insert(weeklyCheckins).values(checkin).returning();
     return created;
+  }
+
+  async revealProfile(matchId: string, userId: string): Promise<Match | undefined> {
+    const [match] = await db.select().from(matches).where(eq(matches.id, matchId));
+    if (!match) return undefined;
+    if (match.profilesRevealed?.includes(userId)) return match;
+    const newRevealed = [...(match.profilesRevealed || []), userId];
+    const [updated] = await db
+      .update(matches)
+      .set({ profilesRevealed: newRevealed })
+      .where(eq(matches.id, matchId))
+      .returning();
+    return updated;
+  }
+
+  async getMatchByChatRoom(chatRoomId: string): Promise<Match | undefined> {
+    const [match] = await db.select().from(matches).where(eq(matches.chatRoomId, chatRoomId));
+    return match;
   }
 
   async getAllUsers(): Promise<User[]> {
