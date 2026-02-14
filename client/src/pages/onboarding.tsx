@@ -95,7 +95,7 @@ export default function Onboarding() {
               FailSafe
             </h1>
             <p className="text-xl sm:text-2xl text-muted-foreground font-medium">
-              Turn your setbacks into comebacks, together.
+              Safe to fail. Supported to rise.
             </p>
           </div>
 
