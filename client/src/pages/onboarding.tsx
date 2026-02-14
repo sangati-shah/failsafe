@@ -2,14 +2,12 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { CATEGORIES, FAILURES_BY_CATEGORY, generateUsername } from "@/lib/constants";
+import { generateUsername } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -20,24 +18,38 @@ export default function Onboarding() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [goal, setGoal] = useState("");
-  const [category, setCategory] = useState("");
   const [selectedFailures, setSelectedFailures] = useState<string[]>([]);
   const [failureDescription, setFailureDescription] = useState("");
-  const [severity, setSeverity] = useState([3]);
   const [learningStyle, setLearningStyle] = useState("");
   const [availability, setAvailability] = useState("");
   const [accountabilityStyle, setAccountabilityStyle] = useState("");
+
+  const allFailures = [
+    "Failed multiple interviews",
+    "No responses to applications",
+    "Rejected after final round",
+    "Couldn't land new role",
+    "Skills gap too large",
+    "Failed product launch",
+    "Lost funding or investors",
+    "Gave up halfway through a course",
+    "Failed certification exam",
+    "Can't stay consistent",
+    "Creative block for months",
+    "Procrastinated too long",
+    "Fear of failure held me back",
+    "Lost motivation",
+    "Burnout from trying too hard",
+  ];
 
   const createUser = useMutation({
     mutationFn: async () => {
       const username = generateUsername();
       const res = await apiRequest("POST", "/api/users", {
         username,
-        category,
         goal,
         failures: selectedFailures,
         failureDescription: failureDescription || null,
-        severity: severity[0],
         points: 0,
         badges: [],
         learningStyle: learningStyle || null,
@@ -58,15 +70,13 @@ export default function Onboarding() {
     },
   });
 
-  const availableFailures = category ? FAILURES_BY_CATEGORY[category] || [] : [];
-
   const toggleFailure = (f: string) => {
     setSelectedFailures((prev) =>
       prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
     );
   };
 
-  const canProceedStep1 = goal.trim().length > 0 && category.length > 0;
+  const canProceedStep1 = goal.trim().length > 0;
   const canProceedStep2 = selectedFailures.length > 0;
 
   const steps = [
@@ -122,19 +132,6 @@ export default function Onboarding() {
                 />
                 <p className="text-xs text-muted-foreground mt-1 text-right">{goal.length}/200</p>
               </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Category</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger data-testid="select-category">
-                    <SelectValue placeholder="Choose a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <Button
                 data-testid="button-next-step1"
                 className="w-full"
@@ -149,10 +146,10 @@ export default function Onboarding() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-semibold mb-1">What have been your failures?</h2>
-                <p className="text-sm text-muted-foreground mb-4">Select the setbacks you've experienced</p>
-                <div className="space-y-2">
-                  {availableFailures.map((f) => (
+                <h2 className="text-lg font-semibold mb-1">What have been your setbacks?</h2>
+                <p className="text-sm text-muted-foreground mb-4">Select the ones you've experienced</p>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {allFailures.map((f) => (
                     <label
                       key={f}
                       className="flex items-center gap-3 p-3 rounded-md hover-elevate cursor-pointer border border-transparent"
@@ -178,22 +175,6 @@ export default function Onboarding() {
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground mt-1 text-right">{failureDescription.length}/500</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">How severe is this setback? ({severity[0]}/5)</Label>
-                <Slider
-                  data-testid="slider-severity"
-                  value={severity}
-                  onValueChange={setSeverity}
-                  min={1}
-                  max={5}
-                  step={1}
-                  className="mt-2"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>Minor setback</span>
-                  <span>Major setback</span>
-                </div>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep(1)} data-testid="button-back-step2">
