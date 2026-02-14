@@ -1,0 +1,661 @@
+FailSafe - Product Requirements Document
+Product Vision
+FailSafe is a web application that transforms failures into connections. Users share setbacks anonymously, get matched with others facing similar challenges, and support each other through accountability partnerships and daily challenges. The experience emphasizes uplift, growth, and celebrating small wins.
+Tech Stack
+Required
+
+Frontend: React 18+ with Tailwind CSS
+Backend: Node.js with Express
+Database: Convex.dev (real-time database)
+AI: MiniMax API for challenge generation and suggestions
+Real-time Chat: Socket.io
+Deployment: Replit
+
+Optional Tools (if available credits)
+
+Bem, Daytona, Runloop for development workflow
+
+Design Principles
+
+Clean, minimal interface with intuitive navigation
+Warm, supportive color palette (soft purples #8B7AB8, warm oranges #FF9F66, calming blues #7EC8E3)
+Anonymous-first design to reduce judgment and increase authenticity
+Mobile-responsive from day one
+
+
+Feature Specifications
+1. User Onboarding (Keep Simple - 3 Steps Max)
+Step 1: Goal Setting
+UI Component: Single page form
+
+Input: "What's your goal?" (text input, max 200 chars)
+Input: Category dropdown
+
+Job Search
+Career Change
+Starting a Business
+Learning a Skill
+Academic/Certification
+Health & Fitness
+Creative Projects
+Relationships
+Other
+
+
+
+Step 2: Failure Collection
+
+Header: "What have been your failures along the way?"
+Checklist (pre-populated common failures by category):
+
+Job Search: "Failed interviews", "No responses to applications", "Rejected after final round"
+Business: "Failed launch", "Lost funding", "Product didn't find market fit"
+(Generate 3-5 per category)
+
+
+Text area: "Tell us more (optional)" - 500 char max
+Severity slider: 1 (minor setback) to 5 (major setback)
+
+Step 3: Optional Enhancement
+
+LinkedIn URL (optional): Paste link for profile enhancement
+OR Take a quick quiz: 5 questions to build better profile
+
+"How do you prefer to learn?" (Solo/Group/Both)
+"What's your availability?" (Weekdays/Weekends/Flexible)
+"Preferred accountability style?" (Daily check-ins/Weekly goals/Milestone-based)
+
+
+
+Account Creation
+
+Auto-generate anonymous username: [Adjective]_[Noun]_[4-digit-number]
+
+Examples: Phoenix_Tiger_4521, Rising_Eagle_7832, Brave_Mountain_2019
+
+
+No email/password required for MVP - Use device fingerprint or simple code
+Profile created with: username, category, goal, failures, points (start at 0)
+
+
+2. Failure Leaderboard & Forum
+Leaderboard View
+Layout: Split screen (desktop) or tabbed (mobile)
+Left Side - Leaderboard Rankings:
+┌─────────────────────────────────┐
+│  🏆 Top Failures This Week      │
+├─────────────────────────────────┤
+│ 1. Phoenix_4521        245 pts  │
+│ 2. Rising_Eagle_7832   230 pts  │
+│ 3. Brave_Mountain_2019 180 pts  │
+└─────────────────────────────────┘
+Right Side - Failure Feed:
+Anonymous cards showing:
+
+Generated username
+Category badge
+Failure description (truncated to 2 lines, expand on click)
+Points earned
+Encouragement count
+"Encourage" button (❤️ or 💪 emoji)
+
+Points System:
+
+Post a failure: +10 pts
+Receive encouragement: +2 pts
+Give encouragement: +5 pts
+Complete a daily challenge: +20 pts
+"I tried again" milestone: +50 pts
+Weekly check-in: +15 pts
+
+Posting a Failure
+Quick Post Button: Floating action button (bottom right)
+
+Same form as onboarding step 2
+Instantly added to feed
+Anonymous by default
+
+
+3. Anonymous Matching & Chat Rooms
+Matching Algorithm (MiniMax-Powered)
+Trigger: Automatic after onboarding + user can request re-match weekly
+Matching Criteria (in priority order):
+
+Failure category (exact match preferred)
+Goals similarity (text embedding comparison via MiniMax)
+Location/timezone (if provided)
+Availability overlap
+LinkedIn data similarity (if provided)
+Recent activity (active users prioritized)
+
+Output: 2-3 person chat room
+Match Notification
+┌────────────────────────────────────┐
+│ 🎯 You've been matched!            │
+│                                    │
+│ Phoenix_4521                       │
+│ Rising_Eagle_7832                  │
+│ Brave_Mountain_2019                │
+│                                    │
+│ You all share: Job Search failures │
+│                                    │
+│ [Enter Chat Room]                  │
+└────────────────────────────────────┘
+Chat Interface
+Header:
+
+Chat room name: "The Comeback Crew" (auto-generated)
+Participants count (anonymous usernames)
+"Reveal Profile" button (opt-in)
+
+Main Chat Area:
+
+Socket.io real-time messages
+Simple text only (MVP)
+Emoji reactions on messages
+Typing indicators
+
+Daily Challenge Card (pinned at top):
+┌────────────────────────────────────┐
+│ 📅 Today's Challenge               │
+│                                    │
+│ [MiniMax-generated challenge]      │
+│                                    │
+│ ✅ Completed by: Phoenix_4521      │
+│ ⏳ Pending: Rising_Eagle_7832      │
+│                                    │
+│ [Mark as Complete]                 │
+└────────────────────────────────────┘
+Profile Reveal Flow
+
+User clicks "Reveal Profile" in chat
+Confirmation modal: "Share your real name and contact info with this group?"
+If yes: Show name, email, LinkedIn (if provided)
+Unlock feature: "Suggest Meetup Events"
+
+Meetup Suggestions (Post-Reveal Only)
+Simple Version (MVP):
+
+"Here are some activities you could do together:"
+Coffee shops nearby (hardcoded by city)
+Co-working spaces
+Parks for walking meetings
+(Skip Luma/Partiful integration for MVP)
+
+
+4. Celebration & Accountability System
+"I Tried Again!" Feature
+Location: Profile page + chat room
+UI: Big, prominent button
+
+Click triggers:
+
+Confetti animation (confetti.js)
++50 points added
+Badge unlocked (if first time)
+Notification sent to chat room matches
+
+
+
+Kudos System
+Quick Reactions:
+
+💪 Keep going!
+🔥 You got this!
+🌟 Proud of you!
+🎯 On track!
+
+Each reaction: +5 pts to giver, +2 pts to receiver
+Milestone Celebrations
+Automatic Triggers:
+
+First failure posted → "Courage Badge" 🦁
+5 encouragements given → "Supporter Badge" 🤝
+First challenge completed → "Action Taker Badge" ⚡
+100 points reached → "Rising Star Badge" ⭐
+First "I tried again" → "Phoenix Badge" 🔥
+
+Weekly Check-in
+Timing: Every Sunday evening (user's timezone)
+Modal Prompt:
+
+"How did your week go?"
+Quick select: Great / Good / Okay / Tough / Very Tough
+"One thing you accomplished?" (optional text)
+"Need support with something?" (optional text)
+Submit → +15 pts + data for MiniMax to personalize next week's challenges
+
+
+MiniMax API Integration Requirements
+1. Daily Challenge Generation
+Endpoint: /api/challenges/generate
+Input:
+json{
+  "chatRoomId": "room_123",
+  "users": [
+    {
+      "username": "Phoenix_4521",
+      "category": "Job Search",
+      "failures": ["Failed interviews", "No responses"],
+      "goal": "Land a PM role"
+    }
+  ]
+}
+MiniMax Prompt:
+"Given that these users failed at [job interviews] and their goal is [landing a PM role], suggest ONE small, specific, actionable challenge they can do together TODAY. Keep it under 30 words. Make it collaborative and achievable in 15-30 minutes."
+Output:
+json{
+  "challenge": "Do one mock interview together and give each other feedback on one specific improvement",
+  "estimatedTime": 30
+}
+2. Encouragement Generator
+Endpoint: /api/encouragement/generate
+Input:
+json{
+  "failureCategory": "Job Search",
+  "failureDescription": "Bombed my dream job interview"
+}
+MiniMax Prompt:
+"Write a short, genuine, encouraging message (under 25 words) for someone who failed at [job interview]. Be warm but not toxic-positive. Acknowledge the difficulty."
+Output:
+json{
+  "message": "Interviews are tough. Every 'no' teaches you something valuable. You're building resilience with each try. Keep going."
+}
+3. Action Suggestions for Matches
+Endpoint: /api/suggestions/actions
+Input:
+json{
+  "users": [/* same as challenge generation */]
+}
+MiniMax Prompt:
+"Suggest 3 specific ways two people who failed at [job interviews] can practice together. Each suggestion should be practical, take under 1 hour, and build real skills."
+Output:
+json{
+  "suggestions": [
+    "Practice behavioral questions and time each other's responses",
+    "Review each other's resumes and suggest 3 improvements each",
+    "Research one company together and prepare questions to ask"
+  ]
+}
+4. Onboarding Profile Enhancement
+Endpoint: /api/onboarding/enhance-profile
+Input:
+json{
+  "linkedInUrl": "https://linkedin.com/in/user",
+  "OR": {
+    "quizAnswers": [/* quiz responses */]
+  }
+}
+MiniMax Prompt:
+"Based on this LinkedIn profile [summary], suggest 3 potential areas where this person could help others, and 3 specific failures they might have encountered in their journey."
+
+Database Schema (Convex.dev)
+Users Collection
+typescript{
+  _id: Id<"users">
+  username: string // "Phoenix_4521"
+  category: string // "Job Search"
+  goal: string
+  failures: string[] // ["Failed interviews", "No responses"]
+  failureDescription?: string
+  severity?: number // 1-5
+  points: number
+  badges: string[]
+  linkedInUrl?: string
+  profileData?: object // from quiz or LinkedIn
+  createdAt: number
+  lastActive: number
+}
+Posts Collection
+typescript{
+  _id: Id<"posts">
+  userId: Id<"users">
+  username: string // denormalized for speed
+  category: string
+  content: string
+  severity?: number
+  encouragements: number
+  encouragedBy: Id<"users">[] // prevent double-encouragement
+  timestamp: number
+}
+Matches Collection
+typescript{
+  _id: Id<"matches">
+  userIds: Id<"users">[]
+  category: string
+  chatRoomId: string
+  createdAt: number
+  isActive: boolean
+  profilesRevealed: Id<"users">[] // who opted to reveal
+}
+ChatRooms Collection
+typescript{
+  _id: Id<"chatRooms">
+  matchId: Id<"matches">
+  roomName: string // "The Comeback Crew"
+  messages: {
+    userId: Id<"users">
+    username: string
+    content: string
+    timestamp: number
+    reactions: { emoji: string, userIds: Id<"users">[] }[]
+  }[]
+}
+Challenges Collection
+typescript{
+  _id: Id<"challenges">
+  chatRoomId: Id<"chatRooms">
+  challenge: string
+  generatedAt: number
+  completedBy: Id<"users">[]
+  estimatedTime?: number
+}
+Celebrations Collection
+typescript{
+  _id: Id<"celebrations">
+  userId: Id<"users">
+  type: "tried_again" | "badge_earned" | "milestone"
+  description: string
+  points: number
+  timestamp: number
+}
+```
+
+---
+
+## File Structure
+```
+failsafe/
+├── client/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── Onboarding.jsx
+│   │   │   ├── Leaderboard.jsx
+│   │   │   ├── Match.jsx
+│   │   │   ├── Chat.jsx
+│   │   │   └── Profile.jsx
+│   │   ├── components/
+│   │   │   ├── FailureCard.jsx
+│   │   │   ├── LeaderboardRow.jsx
+│   │   │   ├── ChatMessage.jsx
+│   │   │   ├── ChallengeCard.jsx
+│   │   │   ├── KudosButton.jsx
+│   │   │   ├── ConfettiCelebration.jsx
+│   │   │   └── UsernameGenerator.jsx
+│   │   ├── services/
+│   │   │   ├── convex.js
+│   │   │   ├── minimax.js
+│   │   │   └── socket.js
+│   │   ├── utils/
+│   │   │   ├── points.js
+│   │   │   └── constants.js
+│   │   └── App.jsx
+├── server/
+│   ├── routes/
+│   │   ├── challenges.js
+│   │   ├── matches.js
+│   │   └── encouragement.js
+│   ├── controllers/
+│   │   └── minimaxController.js
+│   └── server.js
+├── convex/
+│   ├── users.ts
+│   ├── posts.ts
+│   ├── matches.ts
+│   ├── challenges.ts
+│   └── schema.ts
+└── package.json
+
+Hardcoded Sample Data (For Testing)
+Sample Failures by Category
+javascriptconst failuresByCategory = {
+  "Job Search": [
+    "Failed multiple interviews",
+    "No responses to applications",
+    "Rejected after final round",
+    "Ghosted by recruiters",
+    "Can't get past screening"
+  ],
+  "Business": [
+    "Failed product launch",
+    "Lost funding/investors",
+    "Co-founder conflict",
+    "Product didn't find market fit",
+    "Ran out of runway"
+  ],
+  "Academic": [
+    "Failed certification exam",
+    "Didn't get into program",
+    "Poor grades in key course",
+    "Thesis/project rejected",
+    "Can't grasp core concepts"
+  ],
+  "Health & Fitness": [
+    "Quit workout routine",
+    "Didn't hit weight goal",
+    "Injury setback",
+    "Can't stay consistent",
+    "Diet failed"
+  ]
+}
+Sample Generated Usernames
+javascriptconst adjectives = ["Phoenix", "Rising", "Brave", "Bold", "Determined", "Fearless", "Mighty", "Resilient"];
+const nouns = ["Eagle", "Tiger", "Mountain", "Star", "Warrior", "Champion", "Explorer", "Pioneer"];
+
+function generateUsername() {
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const num = Math.floor(1000 + Math.random() * 9000);
+  return `${adj}_${noun}_${num}`;
+}
+Sample Challenges
+javascriptconst sampleChallenges = [
+  "Do one mock interview together and give each other feedback",
+  "Share one lesson you learned from your failure with your match",
+  "Set a micro-goal for this week and check in tomorrow",
+  "Research one company together and prepare 3 questions to ask",
+  "Practice your pitch to each other for 5 minutes",
+  "Review each other's resumes and suggest 2 improvements"
+];
+Sample Encouragement Messages
+javascriptconst encouragementTemplates = [
+  "Every setback is setup for a comeback. You got this! 💪",
+  "Failure is just feedback. You're learning and growing. Keep going! 🌟",
+  "The fact that you tried means you're already ahead. Proud of you! 🔥",
+  "It's okay to fall. What matters is getting back up. You're not alone! 🤝"
+];
+
+MVP Feature Priorities
+MUST HAVE (Week 1)
+
+✅ Onboarding flow (3 steps)
+✅ Anonymous username generation
+✅ Failure posting
+✅ Leaderboard with points
+✅ Basic forum/feed view
+✅ Encouragement button (+5 pts)
+
+SHOULD HAVE (Week 2)
+
+✅ Matching algorithm (basic)
+✅ Chat rooms (Socket.io)
+✅ Daily challenges (MiniMax)
+✅ Profile page with badges
+✅ "I tried again" button
+✅ Weekly check-in
+
+NICE TO HAVE (Week 3+)
+
+LinkedIn profile import
+Quiz alternative for onboarding
+Profile reveal in chat
+Meetup suggestions
+Confetti animations
+Emoji reactions on messages
+
+SKIP FOR MVP (V2)
+
+Google Calendar integration
+Luma/Partiful integration
+Voice-to-text input
+Advanced analytics
+Email notifications
+Mobile app
+
+
+API Endpoints Required
+Users
+
+POST /api/users/create - Create anonymous user
+GET /api/users/:userId - Get user profile
+PATCH /api/users/:userId/points - Update points
+
+Posts
+
+POST /api/posts/create - Post a failure
+GET /api/posts/feed - Get failure feed (paginated)
+POST /api/posts/:postId/encourage - Add encouragement
+
+Leaderboard
+
+GET /api/leaderboard/weekly - Top users this week
+GET /api/leaderboard/monthly - Top users this month
+
+Matching
+
+POST /api/matches/find - Find matches for user
+GET /api/matches/:userId - Get user's matches
+
+Chat
+
+GET /api/chat/:roomId/messages - Get chat history
+Socket.io events: send_message, receive_message, typing
+
+Challenges
+
+POST /api/challenges/generate - Generate daily challenge (MiniMax)
+POST /api/challenges/:challengeId/complete - Mark challenge complete
+
+MiniMax
+
+POST /api/minimax/challenge - Generate challenge
+POST /api/minimax/encouragement - Generate encouragement
+POST /api/minimax/suggestions - Get action suggestions
+
+
+UI/UX Requirements
+Color Palette
+css:root {
+  --primary-purple: #8B7AB8;
+  --warm-orange: #FF9F66;
+  --calm-blue: #7EC8E3;
+  --bg-light: #F9F7FB;
+  --text-dark: #2D2D2D;
+  --success-green: #6BCF7F;
+  --error-red: #FF6B6B;
+}
+Typography
+
+Headings: Inter or Poppins (bold, friendly)
+Body: Inter or System UI (readable)
+Size scale: 14px base, 18px large, 24px headings
+
+Components Style Guide
+
+Buttons: Rounded (8px), soft shadows, hover states
+Cards: Subtle borders, light shadows, 12px border-radius
+Inputs: Clean, minimal, focus states with primary color
+Badges: Pill-shaped, small, colorful
+Animations: Subtle, smooth (200-300ms transitions)
+
+
+Success Metrics
+Engagement
+
+Daily active users (DAU)
+Failures posted per user
+Encouragements given per user
+Chat messages sent per room
+Challenges completed
+
+Retention
+
+Week 1 retention (% returning)
+Week 4 retention
+Average session length
+Days between visits
+
+Community Health
+
+Average encouragements per failure post
+% of matches that remain active after 1 week
+% of users who "tried again"
+Positive sentiment in chat messages
+
+
+Launch Checklist
+Pre-Launch
+
+ Test all user flows end-to-end
+ Seed database with sample data
+ MiniMax API calls working
+ Socket.io chat functional
+ Mobile responsive on 3 screen sizes
+ Error handling for all forms
+ Loading states on all async actions
+
+Launch Day
+
+ Deploy to Replit
+ Test with 5-10 real users
+ Monitor error logs
+ Check MiniMax API usage/costs
+ Verify Convex database syncing
+
+Post-Launch (Week 1)
+
+ Collect user feedback
+ Fix critical bugs
+ Add onboarding tooltips if needed
+ Optimize slow queries
+ Plan V2 features based on usage data
+
+
+Development Timeline (3 Weeks)
+Week 1: Core Infrastructure
+
+Day 1-2: Setup + Onboarding
+Day 3-4: Database + Leaderboard
+Day 5-7: Forum feed + Encouragement
+
+Week 2: Matching & Chat
+
+Day 8-9: Matching algorithm
+Day 10-11: Socket.io chat
+Day 12-14: MiniMax challenges
+
+Week 3: Polish & Celebration
+
+Day 15-16: Profile page + badges
+Day 17-18: "I tried again" + confetti
+Day 19-21: Testing + bug fixes
+
+
+Environment Variables
+env# Convex
+CONVEX_DEPLOYMENT=
+CONVEX_URL=
+
+# MiniMax
+MINIMAX_API_KEY=
+MINIMAX_API_URL=
+
+# Socket.io
+SOCKET_PORT=3001
+
+# App
+NODE_ENV=production
+PORT=3000
+
+End of PRD
+This document contains all specifications needed to build FailSafe MVP. Prioritize MUST HAVE features first, then iterate based on user feedback.
