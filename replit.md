@@ -7,6 +7,7 @@ FailSafe is a web application where users share setbacks anonymously, get matche
 - **Frontend**: React 18 + TypeScript, Tailwind CSS, shadcn/ui components
 - **Backend**: Node.js + Express
 - **Database**: PostgreSQL with Drizzle ORM
+- **AI**: MiniMax API (OpenAI-compatible, via openai npm package)
 - **Real-time**: WebSocket (ws) for chat
 - **Routing**: wouter (frontend), Express (backend)
 - **State**: TanStack React Query
@@ -23,6 +24,7 @@ server/
 ├── index.ts         # Express + WebSocket server
 ├── routes.ts        # All API endpoints + WebSocket handling
 ├── storage.ts       # Database CRUD (IStorage interface)
+├── minimax.ts       # MiniMax AI service (encouragement, challenges, support)
 ├── db.ts            # Drizzle + pg connection
 ├── seed.ts          # Sample data seeder
 └── constants.ts     # Points, challenges, room names
@@ -34,14 +36,23 @@ shared/
 ## Key Features
 - Anonymous onboarding (3 steps: goal, failures, preferences)
 - Auto-generated usernames (Adjective_Noun_Number)
-- Failure feed with encouragement system
+- Failure feed with AI-powered encouragement system
+- AI support response when posting failures (MiniMax)
+- AI-generated personalized daily challenges
 - Leaderboard with points
-- Matching system by category
+- Matching system
 - Real-time WebSocket chat rooms
-- Daily challenges per chat room
 - Profile with badges, "I Tried Again!" button
 - Weekly check-ins
 - Dark/light theme toggle
+
+## AI Integration (MiniMax)
+- **AI Support**: When posting a failure, MiniMax generates a personalized supportive response shown in a dialog
+- **AI Encouragement**: When encouraging someone's post, MiniMax generates a contextual encouragement message shown in toast
+- **AI Challenges**: When matched, MiniMax generates tailored daily challenges based on both partners' failures and goals
+- Uses OpenAI SDK with MiniMax base URL (https://api.minimax.io/v1)
+- Model: MiniMax-M1
+- Fallback messages used if API fails
 
 ## API Endpoints
 - `POST /api/users` - Create user (Zod validated)

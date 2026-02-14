@@ -109,9 +109,9 @@ function LeaderboardPanel({ users }: { users: User[] }) {
 export default function Feed() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [aiSupportOpen, setAiSupportOpen] = useState(false);
+  const [aiSupportMessage, setAiSupportMessage] = useState("");
   const [newContent, setNewContent] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [newSeverity, setNewSeverity] = useState([3]);
   const currentUserId = localStorage.getItem("failsafe_user_id") || "";
   const currentUsername = localStorage.getItem("failsafe_username") || "";
 
@@ -128,20 +128,22 @@ export default function Feed() {
       const res = await apiRequest("POST", "/api/posts", {
         userId: currentUserId,
         username: currentUsername,
-        category: newCategory,
+        category: "General",
         content: newContent,
-        severity: newSeverity[0],
       });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
       setDialogOpen(false);
       setNewContent("");
-      setNewCategory("");
-      setNewSeverity([3]);
-      toast({ title: "Failure posted!", description: "+10 points for your courage" });
+      if (data.aiSupport) {
+        setAiSupportMessage(data.aiSupport);
+        setAiSupportOpen(true);
+      } else {
+        toast({ title: "Failure posted!", description: "+10 points for your courage" });
+      }
     },
   });
 
@@ -162,18 +164,9 @@ export default function Feed() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Share Your Setback</DialogTitle>
+                <DialogDescription>Everything stays anonymous. Our AI will offer personalized support.</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 mt-2">
-                <Select value={newCategory} onValueChange={setNewCategory}>
-                  <SelectTrigger data-testid="select-post-category">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Textarea
                   data-testid="textarea-post-content"
                   placeholder="What happened? Share anonymously..."
@@ -182,17 +175,17 @@ export default function Feed() {
                   className="resize-none"
                   rows={4}
                 />
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Severity: {newSeverity[0]}/5</p>
-                  <Slider value={newSeverity} onValueChange={setNewSeverity} min={1} max={5} step={1} />
-                </div>
                 <Button
                   className="w-full"
                   onClick={() => createPost.mutate()}
-                  disabled={!newContent.trim() || !newCategory || createPost.isPending}
+                  disabled={!newContent.trim() || createPost.isPending}
                   data-testid="button-submit-post"
                 >
-                  {createPost.isPending ? "Posting..." : "Post Anonymously"}
+                  {createPost.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 animate-spin" /> Posting & generating support...
+                    </span>
+                  ) : "Post Anonymously"}
                 </Button>
               </div>
             </DialogContent>
@@ -257,6 +250,29 @@ export default function Feed() {
           </div>
         </div>
       </div>
+
+      <Dialog open={aiSupportOpen} onOpenChange={setAiSupportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" /> AI Support
+            </DialogTitle>
+            <DialogDescription>A personalized message just for you. +10 points for your courage.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-2">
+            <Card className="p-4 bg-primary/5 border-primary/20">
+              <p className="text-sm leading-relaxed" data-testid="text-ai-support">{aiSupportMessage}</p>
+            </Card>
+            <Button
+              className="w-full mt-4"
+              onClick={() => setAiSupportOpen(false)}
+              data-testid="button-close-ai-support"
+            >
+              Thanks, I needed that
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
